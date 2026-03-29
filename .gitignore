@@ -47,8 +47,11 @@ db.sqlite3
 .DS_Store
 
 # Private Keys
-private-key.pem
+*.pem
 *.key
 
 # Poetry
 poetry.lock
+
+# LynX local context store
+.lynx_data/

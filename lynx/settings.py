@@ -107,3 +107,7 @@ LOGGING = {
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# LynX context storage
+LYNX_DATA_DIR = BASE_DIR / '.lynx_data'
+LYNX_THREAD_POOL_SIZE = int(os.getenv('LYNX_THREAD_POOL_SIZE', '3'))

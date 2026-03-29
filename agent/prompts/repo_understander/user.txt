@@ -1,0 +1,6 @@
+Narrate this repository. Read every file carefully and tell the story.
+
+Project structure:
+{tree}
+
+{files_content}
