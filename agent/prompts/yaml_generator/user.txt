@@ -1,0 +1,24 @@
+Generate production CI and CD GitHub Actions workflows for this repository.
+
+## Detected Project Info (use these as ground truth)
+{structured_context}
+
+## What This Project Does
+{core_idea}
+
+## How It Works
+{the_flow}
+
+## Project Type
+{project_type}
+
+## Important Files
+{key_characters}
+
+## File Structure
+{tree}
+
+## Dependency and Config Files
+{key_file_contents}
+
+Generate the JSON with "ci" and "cd" keys now.

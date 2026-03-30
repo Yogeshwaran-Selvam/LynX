@@ -1,0 +1,23 @@
+Write a pull request description for the following CI/CD pipeline that was auto-generated for this repository.
+
+## Project Info
+{structured_context}
+
+## What the project does
+{core_idea}
+
+## CI Workflow (.github/workflows/ci.yml)
+```yaml
+{ci_yaml}
+```
+
+## CD Workflow (.github/workflows/cd.yml)
+```yaml
+{cd_yaml}
+```
+
+Write the PR description now. Structure it as:
+1. A one-line summary of what this PR adds
+2. **CI Pipeline** section — explain each job/step and why it's there
+3. **CD Pipeline** section — explain each job/step and why it's there
+4. **What to configure** section — list any secrets or env vars the user must set up

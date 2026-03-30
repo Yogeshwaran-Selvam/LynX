@@ -107,6 +107,59 @@ def read_user_preferences(installation_id: int) -> dict | None:
         return decrypt_json(path.read_bytes())
 
 
+# ── Save output files (plaintext YAML + report) ──────────────
+
+def save_yaml_files(installation_id: int, owner: str, repo: str, yaml_output: dict):
+    """Save ci.yml and cd.yml as actual files."""
+    repo_path = _repo_dir(installation_id, owner, repo)
+    if yaml_output.get("ci"):
+        _atomic_write(repo_path / "ci.yml", yaml_output["ci"])
+    if yaml_output.get("cd"):
+        _atomic_write(repo_path / "cd.yml", yaml_output["cd"])
+
+
+def save_narrative_report(installation_id: int, owner: str, repo: str,
+                          understanding: dict, tree_visual: str):
+    """Save the full narrative as a readable report file."""
+    repo_path = _repo_dir(installation_id, owner, repo)
+    full_name = f"{owner}/{repo}"
+
+    lines = [
+        f"LYNX ANALYSIS REPORT: {full_name}",
+        "=" * 60,
+        "",
+        "CORE IDEA:",
+        understanding.get("core_idea", "N/A"),
+        "",
+        "THE FLOW:",
+        understanding.get("the_flow", "N/A"),
+        "",
+        "PROJECT STRUCTURE:",
+        tree_visual,
+        "",
+        f"FILE-BY-FILE NARRATIVE ({len(understanding.get('file_narratives', {}))} files):",
+        "-" * 40,
+    ]
+
+    for path, bullets in understanding.get("file_narratives", {}).items():
+        lines.append(f"\n  {path}")
+        if isinstance(bullets, list):
+            for bullet in bullets:
+                lines.append(f"    - {bullet}")
+        else:
+            lines.append(f"    - {bullets}")
+
+    key_chars = understanding.get("key_characters", [])
+    if key_chars:
+        lines.append(f"\nKEY FILES: {', '.join(key_chars)}")
+
+    hidden = understanding.get("hidden_details")
+    if hidden:
+        lines.append(f"\nHIDDEN DETAIL: {hidden}")
+
+    _atomic_write(repo_path / "report.txt", "\n".join(lines))
+
+
 # ── Cleanup ───────────────────────────────────────────────────
 
 def delete_repo_context(installation_id: int, owner: str, repo: str):

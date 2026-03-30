@@ -111,3 +111,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # LynX context storage
 LYNX_DATA_DIR = BASE_DIR / '.lynx_data'
 LYNX_THREAD_POOL_SIZE = int(os.getenv('LYNX_THREAD_POOL_SIZE', '3'))
+
+# Smee webhook proxy (for local development)
+SMEE_URL = os.getenv('SMEE_URL', '')
+LYNX_WEBHOOK_TARGET = f"http://127.0.0.1:{os.getenv('PORT', '8000')}/agent/webhook"

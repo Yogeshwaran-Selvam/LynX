@@ -1,13 +1,40 @@
+import hashlib
+import hmac
 import json
 import logging
+import os
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from dotenv import load_dotenv
 from . import tasks
 from . import context_store
 from .pipeline import analyze_repo, analyze_repos_batch
 
+load_dotenv()
+
 logger = logging.getLogger(__name__)
+
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
+
+
+def _verify_signature(request) -> bool:
+    """Verify GitHub webhook signature (X-Hub-Signature-256)."""
+    if not WEBHOOK_SECRET:
+        return True  # Skip verification if no secret configured
+
+    signature = request.headers.get("X-Hub-Signature-256", "")
+    if not signature:
+        logger.warning("Webhook missing X-Hub-Signature-256 header")
+        return False
+
+    expected = "sha256=" + hmac.new(
+        WEBHOOK_SECRET.encode(),
+        request.body,
+        hashlib.sha256,
+    ).hexdigest()
+
+    return hmac.compare_digest(signature, expected)
 
 
 def home(request):
@@ -17,6 +44,10 @@ def home(request):
 @csrf_exempt
 @require_POST
 def webhook(request):
+    if not _verify_signature(request):
+        logger.warning("Webhook signature verification failed")
+        return HttpResponse("Invalid signature", status=403)
+
     try:
         payload = json.loads(request.body)
     except json.JSONDecodeError:

@@ -7,10 +7,15 @@ Usage:
     python manage.py lynx run <owner/repo>           Run the full analysis pipeline
     python manage.py lynx context <owner/repo>       View stored context for a repo
     python manage.py lynx prefs <installation_id>    View user preferences
+    python manage.py lynx webhook                    Start smee webhook proxy
 """
 
 import json
+import shutil
+import subprocess
+import sys
 import requests
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from agent.repo_reader import _get_jwt_token, _get_installation_token, _headers
 from agent.pipeline import analyze_repo
@@ -22,7 +27,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("action",
-                            choices=["installations", "repos", "run", "context", "prefs"],
+                            choices=["installations", "repos", "run", "context", "prefs", "webhook"],
                             help="Action to perform")
         parser.add_argument("target", nargs="?", default=None,
                             help="Installation ID or owner/repo depending on action")
@@ -53,6 +58,8 @@ class Command(BaseCommand):
                 self.stderr.write("Usage: python manage.py lynx prefs <installation_id>")
                 return
             self._show_prefs(int(target))
+        elif action == "webhook":
+            self._start_webhook_proxy()
 
     def _list_installations(self):
         jwt_token = _get_jwt_token()
@@ -174,3 +181,37 @@ class Command(BaseCommand):
 
         self.stdout.write(f"\n--- User Preferences (installation {installation_id}) ---")
         self.stdout.write(json.dumps(prefs, indent=2))
+
+    def _start_webhook_proxy(self):
+        smee_url = settings.SMEE_URL
+        target = settings.LYNX_WEBHOOK_TARGET
+
+        if not smee_url:
+            self.stderr.write(
+                "SMEE_URL not set in .env\n"
+                "Get one at https://smee.io and add: SMEE_URL=https://smee.io/your-channel"
+            )
+            return
+
+        # Find npx
+        npx = shutil.which("npx")
+        if not npx:
+            self.stderr.write("npx not found. Install Node.js or run: npm install -g smee-client")
+            return
+
+        self.stdout.write(f"\nStarting smee webhook proxy...")
+        self.stdout.write(f"  Source:  {smee_url}")
+        self.stdout.write(f"  Target:  {target}")
+        self.stdout.write(f"  Press Ctrl+C to stop\n")
+
+        try:
+            subprocess.run(
+                [npx, "smee-client", "-u", smee_url, "--target", target],
+                check=True,
+            )
+        except KeyboardInterrupt:
+            self.stdout.write("\nWebhook proxy stopped.")
+        except subprocess.CalledProcessError as e:
+            self.stderr.write(f"smee-client exited with error: {e}")
+        except FileNotFoundError:
+            self.stderr.write("smee-client not found. Run: npm install -g smee-client")
